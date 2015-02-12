@@ -107,6 +107,8 @@ public:
 } vet_service;
 
 int main() {
+  typedef Switchboard<0>::Service Service;
+  typedef Switchboard<0>::Handle Handle;
   Service service;
 
   service.add<Dog>(dog_service);
