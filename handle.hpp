@@ -32,58 +32,59 @@
 #include <typeindex>
 #include <map>
 
-
-
-class Service final {
+template<int N>
+class Switchboard {
 public:
-  Service() {
-  }
-  template<class resource_type>
-  void add(std::function<void(resource_type&)> fn) {
-    handler<resource_type>() = fn;
-  }
+  class Service final {
+  public:
+    Service() {
+    }
+    template<class resource_type>
+    void add(std::function<void(resource_type&)> fn) {
+      handler<resource_type>() = fn;
+    }
 
-  template<class resource_type>
-  void operator()(resource_type& resource) {
-    auto handle = handler<resource_type>();
-    handle(resource);
-  }
-private:
-  template<class resource_type>
-  static std::function<void(resource_type&)>& handler() {
-    static std::function<void(resource_type&)> handler_ = 
-      default_handler<resource_type>;
-    return handler_;
-  }
+    template<class resource_type>
+    void operator()(resource_type& resource) {
+      auto handle = handler<resource_type>();
+      handle(resource);
+    }
+  private:
+    template<class resource_type>
+    static std::function<void(resource_type&)>& handler() {
+      static std::function<void(resource_type&)> handler_ = 
+        default_handler<resource_type>;
+      return handler_;
+    }
 
-  template<class resource_type>
-  static void default_handler(resource_type&) { }
-};
+    template<class resource_type>
+    static void default_handler(resource_type&) { }
+  };
 
+  class Handle {
+  public:
 
-class Handle {
-public:
+    template<class resource_type>
+    explicit Handle(resource_type& r) : unknown_(&r) {
+      visit_ = [&](Service& service) {
+        resource_type& resource = *static_cast<resource_type*>(unknown_);
+        service(resource);
+      };
+    }
 
-  template<class resource_type>
-  explicit Handle(resource_type& r) : unknown_(&r) {
-    visit_ = [&](Service& service) {
-      resource_type& resource = *static_cast<resource_type*>(unknown_);
-      service(resource);
-    };
-  }
+    void visit(Service& service) {
+      visit_(service);
+    }
 
-  void visit(Service& service) {
-    visit_(service);
-  }
+    Handle(const Handle& r) : unknown_(r.unknown_), visit_(r.visit_) {
 
-  Handle(const Handle& r) : unknown_(r.unknown_), visit_(r.visit_) {
+    }
 
-  }
-
-  Handle(Handle&& r) noexcept : unknown_(r.unknown_), visit_(std::move(r.visit_)) {
-  }
-private:
-  void* unknown_;
-  std::function<void(Service&)> visit_;
+    Handle(Handle&& r) noexcept : unknown_(r.unknown_), visit_(std::move(r.visit_)) {
+    }
+  private:
+    void* unknown_;
+    std::function<void(Service&)> visit_;
+  };
 };
 #endif//handle_hpp_20150209_1149
