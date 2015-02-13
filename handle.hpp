@@ -49,6 +49,13 @@ public:
       auto handle = handler<resource_type>();
       handle(resource);
     }
+
+    template<class resource_type>
+    void operator()(const resource_type& resource) const {
+      auto handle = handler<const resource_type>();
+      handle(resource);
+    }
+
   private:
     template<class resource_type>
     static std::function<void(resource_type&)>& handler() {
@@ -56,7 +63,13 @@ public:
         default_handler<resource_type>;
       return handler_;
     }
-
+    template<class resource_type>
+    static std::function<void(const resource_type&)>& const_handler() {
+      static std::function<void(const resource_type&)> handler_ = 
+        default_handler<resource_type>;
+      return handler_;
+    }
+    
     template<class resource_type>
     static void default_handler(resource_type&) { }
   };
@@ -65,7 +78,8 @@ public:
   public:
 
     template<class resource_type>
-    explicit Handle(resource_type& r) : unknown_(&r) {
+    explicit Handle(resource_type& r) {
+      unknown_ = (void*)(&r);
       visit_ = [&](Service& service) {
         resource_type& resource = *static_cast<resource_type*>(unknown_);
         service(resource);
@@ -76,6 +90,9 @@ public:
       visit_(service);
     }
 
+    void visit(const Service& service) const {
+      visit_const(service);
+    }
     Handle(const Handle& r) : unknown_(r.unknown_), visit_(r.visit_) {
 
     }
@@ -83,8 +100,38 @@ public:
     Handle(Handle&& r) noexcept : unknown_(r.unknown_), visit_(std::move(r.visit_)) {
     }
   private:
-    void* unknown_;
+    void* unknown_ = nullptr;
     std::function<void(Service&)> visit_;
   };
+
+  class ConstHandle {
+  public:
+
+    template<class resource_type>
+    explicit ConstHandle(const resource_type& r) : unknown_(&r) {
+      visit_ = [&](Service& service) {
+        const resource_type& resource = *static_cast<const resource_type*>(unknown_);
+        service(resource);
+      };
+    }
+
+    void visit(Service& service) {
+      visit_(service);
+    }
+
+    void visit(const Service& service) const {
+      visit_const(service);
+    }
+    ConstHandle(const ConstHandle& r) : unknown_(r.unknown_), visit_(r.visit_) {
+
+    }
+
+    ConstHandle(ConstHandle&& r) noexcept : unknown_(r.unknown_), visit_(std::move(r.visit_)) {
+    }
+  private:
+    const void* unknown_;
+    std::function<void(Service&)> visit_;
+  };
+
 };
 #endif//handle_hpp_20150209_1149
