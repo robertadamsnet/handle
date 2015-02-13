@@ -39,7 +39,8 @@ private:
 
 class Cat : public Animal {
 public:
-  string meow() {
+  Cat() { }
+  string meow() const {
     return  "meow";
   }
 private:
@@ -50,7 +51,8 @@ private:
 
 class Dog : public Animal {
 public:
-  string woof() {
+  Dog() { }
+  string woof() const {
     return "woof";
   }
 private:
@@ -61,13 +63,14 @@ private:
 
 class Fox : public Animal {
 public:
- string say() {
-   return "???";
- }
+  Fox() { }
+  string say() const {
+    return "???";
+  }
 private:
- virtual string v_name() const override {
-   return "fox";
- }
+  virtual string v_name() const override {
+    return "fox";
+  }
 };
 
 void dog_service(Dog& dog) {
@@ -98,7 +101,7 @@ public:
     say(cat, cat.meow());
   }
 
-  void say(Animal& animal, string phrase) {
+  void say(const Animal& animal, string phrase) {
     string name = animal.name();
     cout << "Fixing a " << name << "..." << endl
          << "\"" << phrase << "!\"" << endl
