@@ -32,8 +32,8 @@
 #include <typeindex>
 #include <map>
 
-template<int N>
-class Switchboard {
+template<class Tag>
+class ServiceTag {
 public:
   class Service final {
   public:
