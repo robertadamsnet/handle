@@ -30,7 +30,6 @@
 
 #include <functional>
 #include <typeindex>
-#include <map>
 
 template<int N>
 class Switchboard {
